@@ -29,6 +29,7 @@
   var Typeahead = function (element, options) {
     this.$element = $(element)
     this.options = $.extend({}, $.fn.typeahead.defaults, options)
+    this.mapper = this.options.mapper || this.mapper
     this.matcher = this.options.matcher || this.matcher
     this.sorter = this.options.sorter || this.sorter
     this.highlighter = this.options.highlighter || this.highlighter
@@ -87,8 +88,10 @@
         return this.shown ? this.hide() : this
       }
 
-      items = $.grep(this.source, function (item) {
-        return that.matcher(item)
+      items = $.map(this.source, this.mapper)
+
+      items = $.grep(items, function (item) {
+        return that.matcher(item.label)
       })
 
       items = this.sorter(items)
@@ -100,8 +103,12 @@
       return this.render(items.slice(0, this.options.items)).show()
     }
 
-  , matcher: function (item) {
-      return ~item.toLowerCase().indexOf(this.query.toLowerCase())
+  , mapper: function (item) {
+    return { label: item, value: item }
+  }
+
+  , matcher: function (label) {
+      return ~label.toLowerCase().indexOf(this.query.toLowerCase())
     }
 
   , sorter: function (items) {
@@ -111,17 +118,17 @@
         , item
 
       while (item = items.shift()) {
-        if (!item.toLowerCase().indexOf(this.query.toLowerCase())) beginswith.push(item)
-        else if (~item.indexOf(this.query)) caseSensitive.push(item)
+        if (!item.label.toLowerCase().indexOf(this.query.toLowerCase())) beginswith.push(item)
+        else if (~item.label.indexOf(this.query)) caseSensitive.push(item)
         else caseInsensitive.push(item)
       }
 
       return beginswith.concat(caseSensitive, caseInsensitive)
     }
 
-  , highlighter: function (item) {
+  , highlighter: function (label) {
       var query = this.query.replace(/[\-\[\]{}()*+?.,\\\^$|#\s]/g, '\\$&')
-      return item.replace(new RegExp('(' + query + ')', 'ig'), function ($1, match) {
+      return label.replace(new RegExp('(' + query + ')', 'ig'), function ($1, match) {
         return '<strong>' + match + '</strong>'
       })
     }
@@ -130,8 +137,8 @@
       var that = this
 
       items = $(items).map(function (i, item) {
-        i = $(that.options.item).attr('data-value', item)
-        i.find('a').html(that.highlighter(item))
+        i = $(that.options.item).attr('data-value', item.value)
+        i.find('a').html(that.highlighter(item.label))
         return i[0]
       })
 
