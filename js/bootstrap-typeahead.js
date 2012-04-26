@@ -94,10 +94,10 @@
   , process: function (items) {
     var that = this
 
-    items = $.map(items, this.mapper)
+    items = this.mapper(items)
 
     items = $.grep(items, function (item) {
-      return that.matcher(item.label)
+      return that.matcher(item)
     })
 
     items = this.sorter(items)
@@ -109,12 +109,12 @@
     return this.render(items.slice(0, this.options.items)).show()
   }
 
-  , mapper: function (item) {
-    return { label: item, value: item }
+  , mapper: function (items) {
+    return items
   }
 
-  , matcher: function (label) {
-      return ~label.toLowerCase().indexOf(this.query.toLowerCase())
+  , matcher: function (item) {
+      return ~item.toLowerCase().indexOf(this.query.toLowerCase())
     }
 
   , sorter: function (items) {
@@ -124,17 +124,17 @@
         , item
 
       while (item = items.shift()) {
-        if (!item.label.toLowerCase().indexOf(this.query.toLowerCase())) beginswith.push(item)
-        else if (~item.label.indexOf(this.query)) caseSensitive.push(item)
+        if (!item.toLowerCase().indexOf(this.query.toLowerCase())) beginswith.push(item)
+        else if (~item.indexOf(this.query)) caseSensitive.push(item)
         else caseInsensitive.push(item)
       }
 
       return beginswith.concat(caseSensitive, caseInsensitive)
     }
 
-  , highlighter: function (label) {
+  , highlighter: function (item) {
       var query = this.query.replace(/[\-\[\]{}()*+?.,\\\^$|#\s]/g, '\\$&')
-      return label.replace(new RegExp('(' + query + ')', 'ig'), function ($1, match) {
+      return item.replace(new RegExp('(' + query + ')', 'ig'), function ($1, match) {
         return '<strong>' + match + '</strong>'
       })
     }
@@ -143,8 +143,8 @@
       var that = this
 
       items = $(items).map(function (i, item) {
-        i = $(that.options.item).attr('data-value', item.value)
-        i.find('a').html(that.highlighter(item.label))
+        i = $(that.options.item).attr('data-value', item)
+        i.find('a').html(that.highlighter(item))
         return i[0]
       })
 
