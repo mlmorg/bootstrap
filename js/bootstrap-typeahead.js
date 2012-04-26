@@ -78,9 +78,7 @@
     }
 
   , lookup: function (event) {
-      var that = this
-        , items
-        , q
+      var items
 
       this.query = this.$element.val()
 
@@ -88,20 +86,28 @@
         return this.shown ? this.hide() : this
       }
 
-      items = $.map(this.source, this.mapper)
+      items = $.isFunction(this.source) ? this.source(this.query, this) : this.source;
 
-      items = $.grep(items, function (item) {
-        return that.matcher(item.label)
-      })
-
-      items = this.sorter(items)
-
-      if (!items.length) {
-        return this.shown ? this.hide() : this
-      }
-
-      return this.render(items.slice(0, this.options.items)).show()
+      return items ? this.process(items) : this;
     }
+
+  , process: function (items) {
+    var that = this
+
+    items = $.map(items, this.mapper)
+
+    items = $.grep(items, function (item) {
+      return that.matcher(item.label)
+    })
+
+    items = this.sorter(items)
+
+    if (!items.length) {
+      return this.shown ? this.hide() : this
+    }
+
+    return this.render(items.slice(0, this.options.items)).show()
+  }
 
   , mapper: function (item) {
     return { label: item, value: item }
